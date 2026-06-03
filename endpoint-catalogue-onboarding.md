@@ -6,13 +6,14 @@ The **Endpoint Catalogue** (also referred to as the Endpoint Catalog or EPC) is 
 
 Any system that needs to:
 
-- **Discover** where to send a booking, referral, or other BaRS interaction (consumer/read)
-- **Register** its own endpoints so others can find it (provider/write)
-- **Manage** healthcare services and their endpoint configurations (admin)
+- **Manage** endpoints directly (self-service registration, updates, decommissioning)
+- **Discover** services for purposes outside of BaRS messaging (e.g., admin tooling, directory queries)
 
-...will need to onboard to the Endpoint Catalogue API.
+...will need to onboard to the Endpoint Catalogue API directly.
 
-This guide covers onboarding for both **internal NHSE teams** and **external suppliers/providers**.
+> **Important**: If you are an external supplier building a standard BaRS integration, you do **not** need direct access to the Endpoint Catalogue API. The BaRS Proxy handles endpoint resolution (`GET /Endpoint`) internally on your behalf. Your endpoint is registered in the catalogue by the **BaRS run/maintain team** as part of supplier onboarding. See the [current onboarding process](./current-onboarding-process.md) for that journey.
+
+This guide covers direct EPC onboarding for both **internal NHSE teams** and **external suppliers/providers who need to manage endpoints themselves**.
 
 ---
 
@@ -56,9 +57,9 @@ The Endpoint Catalogue is a **separate API** from the BaRS Proxy, but they work 
                         └─────────────────────┘
 ```
 
-- **BaRS Proxy** (inside Apigee) handles runtime messaging — routing bookings, referrals, and other BaRS messages to Receivers.
-- **Endpoint Catalogue** (AWS backend) stores the endpoint directory — the Proxy calls it internally to resolve where to send messages.
-- **Admin users and supplier systems** call the EPC directly to manage their endpoint registrations.
+- **BaRS Proxy** (inside Apigee) handles runtime messaging — routing bookings, referrals, and other BaRS messages to Receivers. The Proxy calls the EPC internally to resolve target endpoints; **suppliers do not need direct EPC access for this**.
+- **Endpoint Catalogue** (AWS backend) stores the endpoint directory. During standard BaRS onboarding, the **run/maintain team** registers supplier endpoints here on the supplier's behalf.
+- **Admin users and internal systems** call the EPC directly to manage endpoint registrations (this is the focus of this guide).
 
 ### Routing
 
@@ -106,52 +107,63 @@ Apigee validates the token (signature, expiry, audience). The EPC backend then e
 
 ### For External Suppliers / Providers
 
-External organisations onboarding to the Endpoint Catalogue should follow these steps:
+#### Standard BaRS Integration (Most Suppliers)
 
-#### 1. Register on the NHS Developer Portal
+If you are building a BaRS integration (booking, referral, validation, etc.), you do **not** need to onboard to the Endpoint Catalogue API directly. Here's how it works:
+
+1. You complete the standard [BaRS onboarding process](./current-onboarding-process.md) — connecting as a Sender (OAuth) and/or Receiver (TLS-MA).
+2. As part of that onboarding, you provide the BaRS Team with your Receiver URL.
+3. The **BaRS run/maintain team** registers your endpoint in the Endpoint Catalogue on your behalf.
+4. The BaRS Proxy then resolves your endpoint internally when routing messages to you.
+
+You never call `GET /Endpoint` yourself — the Proxy does it for you.
+
+> **Future state**: Full self-service endpoint management for suppliers is planned but not yet available. Until then, endpoint registration and updates are handled by the run/maintain team during supplier onboarding.
+
+#### Direct EPC Access (Self-Service Endpoint Management)
+
+Some suppliers may need direct access to the Endpoint Catalogue API — for example, if they are:
+
+- Building tooling to manage their own endpoints across multiple services
+- Operating as a platform provider managing endpoints on behalf of multiple organisations
+- Participating in a self-service pilot
+
+In this case:
+
+##### 1. Register on the NHS Developer Portal
 
 - Go to [https://digital.nhs.uk/developer](https://digital.nhs.uk/developer)
 - Create an account and register your application.
 - You'll receive an **App ID** and configure your **JWKS** (JSON Web Key Set) for signed JWT authentication.
 
-#### 2. Request API Access
+##### 2. Request API Access
 
 - From the Developer Portal, request access to the **Endpoint Catalog API** product.
 - For INT: Access is generally available once your application is registered.
-- For PROD: Access requires a completed Technical Conformance Certificate (TCC) from Solution Assurance, or explicit agreement with the BaRS Team.
+- For PROD: Access requires explicit agreement with the BaRS Team.
 
-#### 3. Connect to the API
+##### 3. Connect to the API
 
-**For read operations (service discovery):**
+**For read operations (querying the catalogue):**
 
 - Use application-restricted authentication (signed JWT).
 - Call `GET /Endpoint` or `GET /HealthcareService` with appropriate query parameters.
 - Include required headers: `X-Request-Id`, `X-Correlation-Id`, `NHSD-End-User-Organisation-ODS`.
 
-**For write operations (registering your endpoints):**
+**For write operations (managing endpoints):**
 
 - If automated (supplier system managing its own endpoints): use application-restricted auth with appropriate product scopes.
 - If manual (human admin): use CIS2 user-restricted auth.
 - Call `POST /Endpoint`, `POST /HealthcareService`, etc.
 
-#### 4. Register Your Service
-
-To be discoverable by the BaRS Proxy and other consumers:
-
-1. Create a **HealthcareService** resource representing your logical service (with your ODS code and service identifier).
-2. Create one or more **Endpoint** resources with the address (URL) of your receiver.
-3. Optionally, create a **List** resource if you need to define priority ordering for multiple endpoints.
-
-#### 5. Validate in INT
+##### 4. Validate in INT
 
 - Confirm your Endpoint is discoverable via `GET /Endpoint` queries.
 - If using BaRS messaging, verify that the BaRS Proxy can resolve your endpoint and route messages to you.
-- Use TKW or a partner supplier in INT to test end-to-end.
 
-#### 6. Move to Production
+##### 5. Move to Production
 
-- Once assured (TCC issued or BaRS Team agreement), repeat the registration steps against the Production environment.
-- Update any firewall exceptions to receive messages from the BaRS Proxy in production.
+- Once agreed with the BaRS Team, repeat the steps against the Production environment.
 
 ---
 
@@ -258,7 +270,7 @@ Content-Type: application/fhir+json
 | **Onboarding artefact** | SCAL → TCC | Developer Portal registration + BaRS Team agreement |
 | **Assurance** | Formal SCAL process | Light-touch (confirm operations work in INT) |
 | **Base URL** | `/booking-and-referral/FHIR/R4` | `/endpoint-catalog/FHIR/R4` |
-| **Who calls it** | Sender systems (via Proxy) | Admin tools, supplier systems, BaRS Proxy (internally) |
+| **Who calls it** | Sender systems (via Proxy) | Admin tools, internal systems, BaRS run/maintain team, future self-service suppliers |
 
 ---
 
@@ -266,9 +278,11 @@ Content-Type: application/fhir+json
 
 ### "I'm a supplier building a BaRS Application"
 
-You need **both**:
-1. BaRS Proxy onboarding (to send/receive messages) — see [current onboarding process](./current-onboarding-process.md)
-2. Endpoint Catalogue registration (so the Proxy can find your receiver) — this guide
+You **don't** need direct EPC access. The BaRS Proxy resolves endpoints internally, and the run/maintain team registers your endpoint for you during onboarding. See the [current onboarding process](./current-onboarding-process.md).
+
+### "I'm a supplier and want to manage my own endpoints"
+
+You need direct Endpoint Catalogue onboarding — see the "Direct EPC Access" section above. This is not yet generally available; contact the BaRS Team to discuss.
 
 ### "I'm an internal team using the Standard Pattern"
 
