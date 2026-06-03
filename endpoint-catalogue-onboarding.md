@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Endpoint Catalogue** (also referred to as the Endpoint Catalog or EPC) is the service discovery component of the BaRS ecosystem. It stores and serves information about **where** healthcare services can be reached — mapping service identifiers to routable endpoint addresses.
+The **Endpoint Catalogue** (also referred to as the EPC) is the service discovery component of the BaRS ecosystem. It stores and serves information about **where** healthcare services can be reached — mapping service identifiers to routable endpoint addresses.
 
 Any system that needs to:
 
