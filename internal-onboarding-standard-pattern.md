@@ -36,6 +36,17 @@ It supports the following capabilities using the FHIR R4 [UKCore-Appointment](ht
 
 The Standard Pattern introduces a central **Registry** using the DocumentReference resource. After a booking is made, the Receiver must POST a pointer to the Registry. This allows Senders to discover existing bookings for a patient without needing to know which service holds them.
 
+> **⚠️ Note on Registry / NRL Integration**
+>
+> Whilst the BaRS standard states the Registry (DocumentReference) integration as a **MUST** requirement, the planned integration with the **National Record Locator (NRL)** has been **placed on hold**. This means that the central repository for booking pointers is not currently available for use.
+>
+> Internal teams should be aware of this when planning their implementation. In practice:
+> - The DocumentReference interactions (POST, PUT, DELETE pointers) described in the standard cannot currently be fulfilled against the NRL.
+> - Teams may choose to implement the pattern against a local or programme-level registry if cross-service appointment visibility is needed now.
+> - Alternatively, teams can defer the Registry integration and implement the core booking workflows (Book, View, Update, Cancel, Reschedule, Rebook) without it, noting that the List capability (which relies on the Registry) will not be available until the NRL integration is resumed.
+>
+> Contact the BaRS Team for the latest status on this.
+
 ---
 
 ## Adoption Options
