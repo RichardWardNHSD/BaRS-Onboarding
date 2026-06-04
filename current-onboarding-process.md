@@ -49,7 +49,7 @@ Suppliers select the use case and Application that meets their needs. Current ap
 - **Application 6** – Out-of-Area CAD-CAD Referral
 - **Application 7** – Additional Booking and Referral workflows
 
-In most applications, a solution acts as both a Sender and a Receiver.
+In most applications, a solution acts as either a Sender or Receiver, but technically a solution can be both.
 
 ---
 
@@ -131,7 +131,7 @@ The **Supplier Conformance Assessment List (SCAL)** is the primary assurance mec
 
 #### Starting the Process
 
-1. Email the BaRS Team at `bookingandreferralstandard@nhs.net` with:
+1. Email the BaRS Team at `england.bookingandreferralstandard@nhs.net` with:
    - Organisation details
    - Product details
    - Which BaRS Application is being undertaken

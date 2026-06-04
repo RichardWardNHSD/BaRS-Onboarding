@@ -195,8 +195,7 @@ Email `england.bookingandreferralstandard@nhs.net` with:
 If you only need to **look up** where services are registered:
 
 - Use `GET /HealthcareService` to find services by ODS code or service identifier.
-- Use `GET /Endpoint` to find the routable address for a given service.
-- Use the `_include=HealthcareService:endpoint` parameter to get both in a single call.
+- Use `GET /Endpoint?_has:HealthcareService:endpoint:_id={id}` to find the routable address for a given service.
 
 No endpoint registration is required if you're only consuming.
 
@@ -218,11 +217,19 @@ Same as external: onboard to INT first, validate, then move to PROD. Each enviro
 
 ### Discovering a Service
 
+To find a HealthcareService:
+
 ```
-GET /HealthcareService?identifier={system}|{value}&_include=HealthcareService:endpoint
+GET /HealthcareService?identifier={system}|{value}
 ```
 
-This returns a Bundle containing the HealthcareService and its associated Endpoint resources.
+Then retrieve its Endpoints:
+
+```
+GET /Endpoint?_has:HealthcareService:endpoint:_id={healthcare-service-id}
+```
+
+This two-step pattern ensures Endpoints are returned with full visibility filtering (status, period, HealthcareService.active) and support for `connectionType` and `payloadType` filtering.
 
 ### Querying Endpoints Directly
 
