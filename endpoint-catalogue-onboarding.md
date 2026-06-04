@@ -29,11 +29,13 @@ The Endpoint Catalogue API is a FHIR R4 interface that manages:
 
 ### Environments
 
+> **Note:** The Endpoint Catalogue API is currently part of the BaRS API product and shares the same base path (`/booking-and-referral/FHIR/R4`). The EPC operations (`/Endpoint`, `/HealthcareService`, `/List`) are served from the same API as the BaRS messaging operations, with routing handled internally by the platform. The longer-term intention is to make the EPC a standalone API product with its own base path (`/endpoint-catalog/FHIR/R4`), but for now consumers access it via the BaRS URL.
+
 | Environment | Base URL |
 |---|---|
-| Sandbox | `https://sandbox.api.service.nhs.uk/endpoint-catalog/FHIR/R4` |
-| Integration (INT) | `https://int.api.service.nhs.uk/endpoint-catalog/FHIR/R4` |
-| Production (PROD) | `https://api.service.nhs.uk/endpoint-catalog/FHIR/R4` |
+| Sandbox | `https://sandbox.api.service.nhs.uk/booking-and-referral/FHIR/R4` |
+| Integration (INT) | `https://int.api.service.nhs.uk/booking-and-referral/FHIR/R4` |
+| Production (PROD) | `https://api.service.nhs.uk/booking-and-referral/FHIR/R4` |
 
 ---
 
@@ -276,7 +278,7 @@ Content-Type: application/fhir+json
 | **Authentication (Receiver)** | TLS-MA certificate | N/A (EPC is not a receiver of messages) |
 | **Onboarding artefact** | SCAL → TCC | Developer Portal registration + BaRS Team agreement |
 | **Assurance** | Formal SCAL process | Light-touch (confirm operations work in INT) |
-| **Base URL** | `/booking-and-referral/FHIR/R4` | `/endpoint-catalog/FHIR/R4` |
+| **Base URL** | `/booking-and-referral/FHIR/R4` (messaging paths) | `/booking-and-referral/FHIR/R4` (catalogue paths — shared for now; future: `/endpoint-catalog/FHIR/R4`) |
 | **Who calls it** | Sender systems (via Proxy) | Admin tools, internal systems, BaRS run/maintain team, future self-service suppliers |
 
 ---
